@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Android PWA Meta-Tags -->
+    <!-- PWA Meta-Tags für Android & iOS -->
     <meta name="theme-color" content="#4f46e5">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -49,17 +49,11 @@
 
             <!-- Aktions-Buttons -->
             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <button type="button" onclick="openScannerModal()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                    </svg>
-                    <span>ISBN scannen</span>
-                </button>
-                <button type="button" onclick="openManualModal()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-300 text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer">
+                <button type="button" onclick="openManualModal()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span>Manuell</span>
+                    <span>Buch hinzufügen</span>
                 </button>
                 <button type="button" onclick="exportBooksToCSV()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-700 border border-emerald-200 text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -74,16 +68,24 @@
     <!-- Hauptbereich -->
     <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-8">
 
-        <!-- Sektion 1: Online-Suche (Open Library) -->
+        <!-- Sektion 1: Online-Suche (Open Library) & ISBN-Scanner -->
         <section class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
-            <h2 class="text-base font-semibold text-slate-900 mb-3">Neues Buch suchen (ISBN, Titel oder Autor)</h2>
+            <h2 class="text-base font-semibold text-slate-900 mb-3">Neues Buch suchen (Titel, Autor oder ISBN)</h2>
             <form onsubmit="handleOnlineSearch(event)" class="flex flex-col sm:flex-row gap-2.5">
-                <div class="relative flex-1">
-                    <input type="text" id="onlineSearchInput" placeholder="z.B. 9783608938180, Der Hobbit oder Tolkien..." required
-                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                <div class="relative flex-1 flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="onlineSearchInput" placeholder="z.B. Der Hobbit, Tolkien oder 9783608938180..." required
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <button type="button" onclick="openScannerModal()" title="ISBN-Barcode scannen" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 border border-slate-300 rounded-xl transition-colors cursor-pointer flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
                 </div>
                 <button type="submit" id="onlineSearchBtn" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium rounded-xl transition-colors cursor-pointer">
                     Suchen
@@ -117,7 +119,7 @@
                         class="px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <select id="statusFilterSelect" onchange="renderBooks()" class="px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
                         <option value="Alle">Alle Status</option>
-                        <option value="Ungelesen">Ungelesen</option>
+                        <option value="Möchte ich lesen">Möchte ich lesen</option>
                         <option value="Lese ich gerade">Lese ich gerade</option>
                         <option value="Gelesen">Gelesen</option>
                     </select>
@@ -141,7 +143,7 @@
     </main>
 
     <!-- Modal: ISBN Barcode Scanner -->
-    <div id="scannerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-backdrop">
+    <div id="scannerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-backdrop" onclick="if(event.target === this) closeScannerModal()">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl space-y-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-slate-900">ISBN-Barcode scannen</h3>
@@ -177,10 +179,10 @@
     </div>
 
     <!-- Modal: Buch manuell hinzufügen / bearbeiten -->
-    <div id="bookFormModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-backdrop">
+    <div id="bookFormModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-backdrop" onclick="if(event.target === this) closeBookFormModal()">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-900" id="bookFormTitle">Buch manuell hinzufügen</h3>
+                <h3 class="text-lg font-bold text-slate-900" id="bookFormTitle">Buch hinzufügen</h3>
                 <button type="button" onclick="closeBookFormModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -218,9 +220,15 @@
                 </div>
 
                 <div>
+                    <label for="bookGenreInput" class="block text-xs font-medium text-slate-700 mb-1">Genre</label>
+                    <input type="text" id="bookGenreInput" placeholder="z.B. Fantasy, Krimi, Sachbuch"
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
                     <label for="bookStatusInput" class="block text-xs font-medium text-slate-700 mb-1">Lesestatus</label>
                     <select id="bookStatusInput" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-                        <option value="Ungelesen">Ungelesen</option>
+                        <option value="Möchte ich lesen">Möchte ich lesen</option>
                         <option value="Lese ich gerade">Lese ich gerade</option>
                         <option value="Gelesen">Gelesen</option>
                     </select>
@@ -238,7 +246,7 @@
         </div>
     </div>
 
-    <!-- Modal: Buch-Detailansicht -->
+    <!-- Modal: Buch-Detailansicht (für Suchergebnisse und gespeicherte Bücher) -->
     <div id="bookDetailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-backdrop" onclick="if(event.target === this) closeDetailModal()">
         <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
             <!-- Modal Header -->
@@ -264,23 +272,29 @@
 
                         <div id="detailMetaGrid" class="grid grid-cols-2 gap-x-4 gap-y-2 pt-2 text-xs text-slate-600"></div>
 
+                        <!-- Genre (immer sichtbar) -->
+                        <div class="pt-1 text-xs text-slate-600">
+                            <span class="text-slate-400">Genre:</span>
+                            <span id="detailGenre" class="font-medium text-slate-800">Nicht angegeben</span>
+                        </div>
+
                         <!-- Themen / Schlagworte -->
                         <div id="detailSubjects" class="flex flex-wrap gap-1.5 pt-2"></div>
                     </div>
                 </div>
 
                 <!-- Beschreibung -->
-                <div class="pt-4 border-t border-slate-100">
-                    <h5 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Beschreibung</h5>
-                    <div id="detailDescriptionLoading" class="hidden flex items-center gap-2 text-xs text-slate-500 py-2">
-                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
+                <div class="pt-4 border-t border-slate-100 space-y-2">
+                    <h5 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Beschreibung</h5>
+                    <div id="detailDescriptionLoading" class="hidden flex items-center gap-2 text-xs text-indigo-600">
+                        <div class="animate-spin rounded-full h-3.5 w-3.5 border-2 border-indigo-600 border-t-transparent"></div>
                         <span>Lade Beschreibung...</span>
                     </div>
                     <p id="detailDescription" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line"></p>
                 </div>
             </div>
 
-            <!-- Modal Footer (Zur Liste hinzufügen) -->
+            <!-- Modal Footer -->
             <div class="px-5 sm:px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div id="detailAlreadyInList" class="hidden items-center gap-2 text-sm font-medium text-emerald-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -289,9 +303,23 @@
                     <span>Bereits in deiner Bücherliste</span>
                 </div>
 
+                <div id="detailSavedControls" class="hidden flex-wrap items-center justify-between gap-2.5 w-full">
+                    <div class="flex items-center gap-2">
+                        <label for="detailSavedStatusSelect" class="text-xs font-medium text-slate-600">Status:</label>
+                        <select id="detailSavedStatusSelect" class="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                            <option value="Möchte ich lesen">Möchte ich lesen</option>
+                            <option value="Lese ich gerade">Lese ich gerade</option>
+                            <option value="Gelesen">Gelesen</option>
+                        </select>
+                    </div>
+                    <button id="detailRemoveBtn" type="button" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-sm font-medium rounded-xl transition-colors cursor-pointer">
+                        Aus Liste entfernen
+                    </button>
+                </div>
+
                 <div id="detailAddControls" class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto sm:ml-auto">
                     <select id="detailStatusSelect" class="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-                        <option value="Ungelesen">Ungelesen</option>
+                        <option value="Möchte ich lesen">Möchte ich lesen</option>
                         <option value="Lese ich gerade">Lese ich gerade</option>
                         <option value="Gelesen">Gelesen</option>
                     </select>
@@ -394,7 +422,8 @@
                 const matchesSearch = !searchTerm || 
                     (book.title && book.title.toLowerCase().includes(searchTerm)) ||
                     (book.author && book.author.toLowerCase().includes(searchTerm)) ||
-                    (book.isbn && book.isbn.toLowerCase().includes(searchTerm));
+                    (book.isbn && book.isbn.toLowerCase().includes(searchTerm)) ||
+                    (book.genre && book.genre.toLowerCase().includes(searchTerm));
                 return matchesStatus && matchesSearch;
             });
 
@@ -414,7 +443,8 @@
 
             filtered.forEach(book => {
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow flex gap-4';
+                card.className = 'bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all flex gap-4 cursor-pointer';
+                card.addEventListener('click', () => openDetailModal(book, true));
 
                 let statusBadgeClass = 'bg-slate-100 text-slate-700';
                 if (book.status === 'Lese ich gerade') statusBadgeClass = 'bg-amber-100 text-amber-800';
@@ -437,9 +467,9 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-100">
+                        <div class="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-100" onclick="event.stopPropagation()">
                             <select onchange="changeBookStatus('${book.id}', this.value)" class="text-xs font-medium px-2.5 py-1 rounded-lg border-0 cursor-pointer focus:ring-2 focus:ring-indigo-500 ${statusBadgeClass}">
-                                <option value="Ungelesen" ${book.status === 'Ungelesen' ? 'selected' : ''}>Ungelesen</option>
+                                <option value="Möchte ich lesen" ${book.status === 'Möchte ich lesen' ? 'selected' : ''}>Möchte ich lesen</option>
                                 <option value="Lese ich gerade" ${book.status === 'Lese ich gerade' ? 'selected' : ''}>Lese ich gerade</option>
                                 <option value="Gelesen" ${book.status === 'Gelesen' ? 'selected' : ''}>Gelesen</option>
                             </select>
@@ -489,8 +519,13 @@
                 author: bookData.author || 'Unbekannter Autor',
                 isbn: bookData.isbn || '',
                 year: bookData.year ? String(bookData.year) : '',
+                genre: bookData.genre || (bookData.subjects && bookData.subjects.length > 0 ? bookData.subjects[0] : ''),
+                subjects: Array.isArray(bookData.subjects) ? bookData.subjects : [],
+                workKey: bookData.workKey || '',
+                description: bookData.description || '',
                 cover: bookData.cover || '',
-                status: bookData.status || 'Ungelesen',
+                coverLarge: bookData.coverLarge || '',
+                status: bookData.status || 'Möchte ich lesen',
                 addedAt: new Date().toISOString()
             };
 
@@ -540,13 +575,29 @@
                 const cleanQuery = query.replace(/[-\s]/g, '');
                 const isIsbn = /^(97(8|9))?\d{9}(\d|X)$/i.test(cleanQuery);
 
-                const url = isIsbn 
-                    ? `https://openlibrary.org/search.json?isbn=${encodeURIComponent(cleanQuery)}&limit=6`
-                    : `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=9`;
-
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Netzwerkfehler bei der Suche');
-                const data = await response.json();
+                let data = null;
+                if (isIsbn) {
+                    const response = await fetch(`https://openlibrary.org/search.json?isbn=${encodeURIComponent(cleanQuery)}&limit=6`);
+                    if (!response.ok) throw new Error('Netzwerkfehler bei der Suche');
+                    data = await response.json();
+                } else {
+                    // Zuerst gezielt nach deutschen Ausgaben (language:ger) suchen
+                    const deUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query + ' language:ger')}&lang=de&limit=9`;
+                    const deResponse = await fetch(deUrl);
+                    if (deResponse.ok) {
+                        const deData = await deResponse.json();
+                        if (deData.docs && deData.docs.length > 0) {
+                            data = deData;
+                        }
+                    }
+                    // Fallback auf alle Sprachen, falls 0 deutsche Treffer
+                    if (!data) {
+                        const allUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&lang=de&limit=9`;
+                        const allResponse = await fetch(allUrl);
+                        if (!allResponse.ok) throw new Error('Netzwerkfehler bei der Suche');
+                        data = await allResponse.json();
+                    }
+                }
 
                 resultsGrid.innerHTML = '';
 
@@ -564,8 +615,9 @@
                         const pages = doc.number_of_pages_median || '';
                         const publisher = doc.publisher ? doc.publisher[0] : '';
                         const subjects = doc.subject ? doc.subject.slice(0, 5) : [];
+                        const genre = subjects.length > 0 ? subjects[0] : '';
 
-                        const bookObj = { title, author, year, isbn, cover, coverLarge, workKey, pages, publisher, subjects };
+                        const bookObj = { title, author, year, isbn, cover, coverLarge, workKey, pages, publisher, subjects, genre };
                         const card = document.createElement('div');
                         card.className = 'flex gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-indigo-300 hover:shadow-sm transition-all cursor-pointer';
 
@@ -590,7 +642,7 @@
                             </div>
                         `;
 
-                        card.addEventListener('click', () => openDetailModal(bookObj));
+                        card.addEventListener('click', () => openDetailModal(bookObj, false));
                         card.querySelector('.add-result-btn').addEventListener('click', (e) => {
                             e.stopPropagation();
                             addBook(bookObj);
@@ -618,12 +670,13 @@
         // ==========================================
         // Buch-Detailansicht (Modal)
         // ==========================================
-        async function openDetailModal(bookObj) {
+        async function openDetailModal(bookObj, isSavedBook = false) {
             const modal = document.getElementById('bookDetailModal');
             const coverContainer = document.getElementById('detailCoverContainer');
             const titleEl = document.getElementById('detailTitle');
             const authorEl = document.getElementById('detailAuthor');
             const metaGrid = document.getElementById('detailMetaGrid');
+            const genreEl = document.getElementById('detailGenre');
             const subjectsEl = document.getElementById('detailSubjects');
             const descEl = document.getElementById('detailDescription');
             const descLoading = document.getElementById('detailDescriptionLoading');
@@ -635,8 +688,8 @@
                 coverContainer.innerHTML = getLargePlaceholderCoverHtml();
             }
 
-            titleEl.textContent = bookObj.title;
-            authorEl.textContent = bookObj.author;
+            titleEl.textContent = bookObj.title || 'Unbekannter Titel';
+            authorEl.textContent = bookObj.author || 'Unbekannter Autor';
 
             let metaHtml = '';
             if (bookObj.year) metaHtml += `<div><span class="text-slate-400">Jahr:</span> <span class="font-medium text-slate-800">${escapeHtml(String(bookObj.year))}</span></div>`;
@@ -644,6 +697,9 @@
             if (bookObj.pages) metaHtml += `<div><span class="text-slate-400">Seiten:</span> <span class="font-medium text-slate-800">${escapeHtml(String(bookObj.pages))}</span></div>`;
             if (bookObj.publisher) metaHtml += `<div><span class="text-slate-400">Verlag:</span> <span class="font-medium text-slate-800">${escapeHtml(bookObj.publisher)}</span></div>`;
             metaGrid.innerHTML = metaHtml;
+
+            const displayGenre = bookObj.genre || (bookObj.subjects && bookObj.subjects.length > 0 ? bookObj.subjects[0] : '');
+            genreEl.textContent = displayGenre || 'Nicht angegeben';
 
             subjectsEl.innerHTML = '';
             if (bookObj.subjects && bookObj.subjects.length > 0) {
@@ -655,10 +711,16 @@
                 });
             }
 
-            updateDetailAddState(bookObj);
+            updateDetailFooterState(bookObj, isSavedBook);
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+
+            if (bookObj.description) {
+                descLoading.classList.add('hidden');
+                descEl.textContent = bookObj.description;
+                return;
+            }
 
             descEl.textContent = '';
             if (bookObj.workKey) {
@@ -674,6 +736,10 @@
                             descriptionText = workData.description.value;
                         }
                         descEl.textContent = descriptionText || 'Keine Beschreibung verfügbar.';
+
+                        if (!displayGenre && Array.isArray(workData.subjects) && workData.subjects.length > 0) {
+                            genreEl.textContent = workData.subjects[0];
+                        }
                     } else {
                         descEl.textContent = 'Keine Beschreibung verfügbar.';
                     }
@@ -689,11 +755,37 @@
             }
         }
 
-        function updateDetailAddState(bookObj) {
+        function updateDetailFooterState(bookObj, isSavedBook = false) {
             const alreadyEl = document.getElementById('detailAlreadyInList');
+            const savedControls = document.getElementById('detailSavedControls');
+            const savedStatusSelect = document.getElementById('detailSavedStatusSelect');
+            const removeBtn = document.getElementById('detailRemoveBtn');
             const addControls = document.getElementById('detailAddControls');
             const addBtn = document.getElementById('detailAddBtn');
             const statusSelect = document.getElementById('detailStatusSelect');
+
+            if (isSavedBook && bookObj.id) {
+                alreadyEl.classList.add('hidden');
+                alreadyEl.classList.remove('flex');
+                addControls.classList.add('hidden');
+                savedControls.classList.remove('hidden');
+                savedControls.classList.add('flex');
+
+                savedStatusSelect.value = bookObj.status || 'Möchte ich lesen';
+                savedStatusSelect.onchange = () => {
+                    changeBookStatus(bookObj.id, savedStatusSelect.value);
+                    bookObj.status = savedStatusSelect.value;
+                    showToast('Lesestatus aktualisiert.', 'success');
+                };
+                removeBtn.onclick = () => {
+                    deleteBook(bookObj.id);
+                    closeDetailModal();
+                };
+                return;
+            }
+
+            savedControls.classList.add('hidden');
+            savedControls.classList.remove('flex');
 
             const exists = books.some(b =>
                 (bookObj.isbn && b.isbn === bookObj.isbn) ||
@@ -715,7 +807,7 @@
                         status: statusSelect.value
                     });
                     if (added) {
-                        updateDetailAddState(bookObj);
+                        updateDetailFooterState(bookObj, false);
                     }
                 };
             }
@@ -829,7 +921,11 @@
                         author: doc.author_name ? doc.author_name.join(', ') : 'Unbekannter Autor',
                         year: doc.first_publish_year || '',
                         isbn: cleanIsbn,
-                        cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : ''
+                        genre: doc.subject && doc.subject.length > 0 ? doc.subject[0] : '',
+                        subjects: doc.subject ? doc.subject.slice(0, 5) : [],
+                        workKey: doc.key || '',
+                        cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
+                        coverLarge: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : ''
                     });
                 } else {
                     showToast(`ISBN ${cleanIsbn} nicht gefunden. Bitte manuell ergänzen.`, 'info');
@@ -866,7 +962,7 @@
         // Modal: Manuell hinzufügen / Bearbeiten
         // ==========================================
         function openManualModal(prefillIsbn = '') {
-            document.getElementById('bookFormTitle').textContent = 'Buch manuell hinzufügen';
+            document.getElementById('bookFormTitle').textContent = 'Buch hinzufügen';
             document.getElementById('bookForm').reset();
             document.getElementById('bookIdInput').value = '';
             document.getElementById('bookCoverInput').value = '';
@@ -890,7 +986,8 @@
             document.getElementById('bookAuthorInput').value = book.author;
             document.getElementById('bookIsbnInput').value = book.isbn || '';
             document.getElementById('bookYearInput').value = book.year || '';
-            document.getElementById('bookStatusInput').value = book.status || 'Ungelesen';
+            document.getElementById('bookGenreInput').value = book.genre || '';
+            document.getElementById('bookStatusInput').value = book.status || 'Möchte ich lesen';
             document.getElementById('bookCoverInput').value = book.cover || '';
 
             const modal = document.getElementById('bookFormModal');
@@ -911,6 +1008,7 @@
             const author = document.getElementById('bookAuthorInput').value.trim();
             const isbn = document.getElementById('bookIsbnInput').value.trim();
             const year = document.getElementById('bookYearInput').value.trim();
+            const genre = document.getElementById('bookGenreInput').value.trim();
             const status = document.getElementById('bookStatusInput').value;
             const cover = document.getElementById('bookCoverInput').value;
 
@@ -923,6 +1021,7 @@
                         author,
                         isbn,
                         year,
+                        genre,
                         status,
                         cover
                     };
@@ -931,7 +1030,7 @@
                     showToast('Buch aktualisiert!', 'success');
                 }
             } else {
-                addBook({ title, author, isbn, year, status, cover });
+                addBook({ title, author, isbn, year, genre, status, cover });
             }
 
             closeBookFormModal();
@@ -953,8 +1052,7 @@
                 showToast('Keine Bücher zum Exportieren vorhanden.', 'info');
                 return;
             }
-
-            const headers = ['Titel', 'Autor', 'ISBN', 'Erscheinungsjahr', 'Lesestatus', 'Cover-URL', 'Hinzugefügt am'];
+            const headers = ['Titel', 'Autor', 'ISBN', 'Erscheinungsjahr', 'Genre', 'Lesestatus', 'Cover-URL', 'Hinzugefügt am'];
 
             const escapeCsvValue = (val) => {
                 const str = val === null || val === undefined ? '' : String(val);
@@ -967,6 +1065,7 @@
                 escapeCsvValue(book.author),
                 escapeCsvValue(book.isbn),
                 escapeCsvValue(book.year),
+                escapeCsvValue(book.genre || ''),
                 escapeCsvValue(book.status),
                 escapeCsvValue(book.cover),
                 escapeCsvValue(book.addedAt ? new Date(book.addedAt).toLocaleDateString('de-DE') : '')
