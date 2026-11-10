@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Android PWA Meta-Tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Bücherliste">
+    <title>Meine Bücherliste</title>
+    <!-- Tailwind CSS über CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html5-qrcode für ISBN-Barcode-Scan -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal-backdrop {
+            transition: opacity 0.2s ease-in-out;
+        }
+        html {
+            scrollbar-gutter: stable;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header / Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Meine Bücherliste</h1>
+                    <p class="text-xs text-slate-500" id="bookCountText">0 Bücher gespeichert</p>
+                </div>
+            </div>
+
+            <!-- Aktions-Buttons -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <button type="button" onclick="openScannerModal()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    <span>ISBN scannen</span>
+                </button>
+                <button type="button" onclick="openManualModal()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-300 text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Manuell</span>
+                </button>
+                <button type="button" onclick="exportBooksToCSV()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 text-emerald-700 border border-emerald-200 text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>CSV Export</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hauptbereich -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-8">
+
+        <!-- Sektion 1: Online-Suche (Open Library) -->
+        <section class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
+            <h2 class="text-base font-semibold text-slate-900 mb-3">Neues Buch suchen (ISBN, Titel oder Autor)</h2>
+            <form onsubmit="handleOnlineSearch(event)" class="flex flex-col sm:flex-row gap-2.5">
+                <div class="relative flex-1">
+                    <input type="text" id="onlineSearchInput" placeholder="z.B. 9783608938180, Der Hobbit oder Tolkien..." required
+                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <button type="submit" id="onlineSearchBtn" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium rounded-xl transition-colors cursor-pointer">
+                    Suchen
+                </button>
+            </form>
+
+            <!-- Lade-Indikator -->
+            <div id="onlineSearchLoading" class="hidden mt-4 flex items-center gap-2 text-sm text-indigo-600">
+                <div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
+                <span>Suche in Open Library...</span>
+            </div>
+
+            <!-- Suchergebnisse -->
+            <div id="onlineSearchResultsContainer" class="hidden mt-5 pt-4 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-slate-700">Suchergebnisse (zum Öffnen anklicken)</h3>
+                    <button type="button" onclick="clearOnlineSearch()" class="text-xs text-slate-500 hover:text-slate-800 cursor-pointer">Ergebnisse ausblenden</button>
+                </div>
+                <div id="onlineSearchResults" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+        </section>
+
+        <!-- Sektion 2: Eigene Bücherliste -->
+        <section class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <h2 class="text-lg font-bold text-slate-900">Deine Sammlung</h2>
+                
+                <!-- Filter & lokale Suche -->
+                <div class="flex flex-col sm:flex-row gap-2.5">
+                    <input type="text" id="localSearchInput" oninput="renderBooks()" placeholder="Sammlung durchsuchen..."
+                        class="px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select id="statusFilterSelect" onchange="renderBooks()" class="px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                        <option value="Alle">Alle Status</option>
+                        <option value="Ungelesen">Ungelesen</option>
+                        <option value="Lese ich gerade">Lese ich gerade</option>
+                        <option value="Gelesen">Gelesen</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Bücher-Grid -->
+            <div id="booksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+            <!-- Leerer Zustand -->
+            <div id="emptyState" class="hidden bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <h3 class="text-sm font-semibold text-slate-900">Keine Bücher gefunden</h3>
+                <p id="emptyStateDesc" class="text-xs text-slate-500 mt-1 max-w-md mx-auto">Deine Bücherliste ist noch leer. Suche oben nach einem Buch, scanne einen ISBN-Barcode oder füge ein Buch manuell hinzu.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: ISBN Barcode Scanner -->
+    <div id="scannerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-backdrop">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900">ISBN-Barcode scannen</h3>
+                <button type="button" onclick="closeScannerModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-500">Halte den EAN-13 / ISBN-Barcode auf der Rückseite des Buches vor die Kamera.</p>
+
+            <!-- Kamera-Container -->
+            <div id="reader" class="w-full rounded-xl overflow-hidden bg-slate-900 min-h-[240px] flex items-center justify-center text-slate-400 text-sm">
+                Kamera wird initialisiert...
+            </div>
+
+            <!-- Fehlermeldung bei Kamera-Problemen -->
+            <div id="scannerError" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl"></div>
+
+            <!-- Status nach erfolgreichem Scan -->
+            <div id="scannerStatus" class="hidden p-3 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs rounded-xl flex items-center gap-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
+                <span id="scannerStatusText">ISBN erkannt, suche Buchdaten...</span>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button type="button" onclick="closeScannerModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl transition-colors cursor-pointer">
+                    Abbrechen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Buch manuell hinzufügen / bearbeiten -->
+    <div id="bookFormModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-backdrop">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-900" id="bookFormTitle">Buch manuell hinzufügen</h3>
+                <button type="button" onclick="closeBookFormModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="bookForm" onsubmit="handleBookFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="bookIdInput">
+                <input type="hidden" id="bookCoverInput">
+
+                <div>
+                    <label for="bookTitleInput" class="block text-xs font-medium text-slate-700 mb-1">Titel *</label>
+                    <input type="text" id="bookTitleInput" required placeholder="z.B. Der Hobbit"
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label for="bookAuthorInput" class="block text-xs font-medium text-slate-700 mb-1">Autor *</label>
+                    <input type="text" id="bookAuthorInput" required placeholder="z.B. J.R.R. Tolkien"
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="bookIsbnInput" class="block text-xs font-medium text-slate-700 mb-1">ISBN</label>
+                        <input type="text" id="bookIsbnInput" placeholder="z.B. 9783608938180"
+                            class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="bookYearInput" class="block text-xs font-medium text-slate-700 mb-1">Erscheinungsjahr</label>
+                        <input type="text" id="bookYearInput" placeholder="z.B. 2012"
+                            class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="bookStatusInput" class="block text-xs font-medium text-slate-700 mb-1">Lesestatus</label>
+                    <select id="bookStatusInput" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                        <option value="Ungelesen">Ungelesen</option>
+                        <option value="Lese ich gerade">Lese ich gerade</option>
+                        <option value="Gelesen">Gelesen</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeBookFormModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl transition-colors cursor-pointer">
+                        Abbrechen
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors cursor-pointer">
+                        Speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Buch-Detailansicht -->
+    <div id="bookDetailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 modal-backdrop" onclick="if(event.target === this) closeDetailModal()">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900">Buchdetails</h3>
+                <button type="button" onclick="closeDetailModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body (scrollbar) -->
+            <div class="p-5 sm:p-6 overflow-y-auto space-y-5">
+                <div class="flex flex-col sm:flex-row gap-5">
+                    <!-- Großes Cover -->
+                    <div id="detailCoverContainer" class="flex-shrink-0 mx-auto sm:mx-0"></div>
+
+                    <!-- Metadaten -->
+                    <div class="flex-1 min-w-0 space-y-2">
+                        <h4 id="detailTitle" class="text-xl font-bold text-slate-900 leading-snug"></h4>
+                        <p id="detailAuthor" class="text-sm font-medium text-indigo-600"></p>
+
+                        <div id="detailMetaGrid" class="grid grid-cols-2 gap-x-4 gap-y-2 pt-2 text-xs text-slate-600"></div>
+
+                        <!-- Themen / Schlagworte -->
+                        <div id="detailSubjects" class="flex flex-wrap gap-1.5 pt-2"></div>
+                    </div>
+                </div>
+
+                <!-- Beschreibung -->
+                <div class="pt-4 border-t border-slate-100">
+                    <h5 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Beschreibung</h5>
+                    <div id="detailDescriptionLoading" class="hidden flex items-center gap-2 text-xs text-slate-500 py-2">
+                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
+                        <span>Lade Beschreibung...</span>
+                    </div>
+                    <p id="detailDescription" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line"></p>
+                </div>
+            </div>
+
+            <!-- Modal Footer (Zur Liste hinzufügen) -->
+            <div class="px-5 sm:px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div id="detailAlreadyInList" class="hidden items-center gap-2 text-sm font-medium text-emerald-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Bereits in deiner Bücherliste</span>
+                </div>
+
+                <div id="detailAddControls" class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto sm:ml-auto">
+                    <select id="detailStatusSelect" class="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                        <option value="Ungelesen">Ungelesen</option>
+                        <option value="Lese ich gerade">Lese ich gerade</option>
+                        <option value="Gelesen">Gelesen</option>
+                    </select>
+                    <button id="detailAddBtn" type="button" class="flex-1 sm:flex-none px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors cursor-pointer">
+                        Zur Liste hinzufügen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast-Benachrichtigung -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toastContent" class="px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white bg-slate-900 flex items-center gap-2">
+            <span id="toastMessage">Nachricht</span>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // Zustand & Initialisierung
+        // ==========================================
+        const STORAGE_KEY = 'meine_buecherliste_v1';
+        let books = [];
+        let html5QrCode = null;
+        let isScanning = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBooks();
+            renderBooks();
+        });
+
+        function loadBooks() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                books = stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                console.error('Fehler beim Laden aus localStorage:', e);
+                books = [];
+            }
+        }
+
+        function saveBooks() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+                updateBookCount();
+            } catch (e) {
+                console.error('Fehler beim Speichern in localStorage:', e);
+                showToast('Fehler beim Speichern im Browser.', 'error');
+            }
+        }
+
+        function updateBookCount() {
+            const countText = document.getElementById('bookCountText');
+            const count = books.length;
+            countText.textContent = count === 1 ? '1 Buch gespeichert' : `${count} Bücher gespeichert`;
+        }
+
+        // ==========================================
+        // Toast-Benachrichtigungen (statt alert)
+        // ==========================================
+        let toastTimeout;
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastContent = document.getElementById('toastContent');
+            const toastMessage = document.getElementById('toastMessage');
+
+            toastMessage.textContent = message;
+            toastContent.className = 'px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white flex items-center gap-2 ';
+            
+            if (type === 'success') {
+                toastContent.classList.add('bg-emerald-600');
+            } else if (type === 'error') {
+                toastContent.classList.add('bg-red-600');
+            } else {
+                toastContent.classList.add('bg-slate-900');
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // ==========================================
+        // Bücherliste rendern & filtern
+        // ==========================================
+        function renderBooks() {
+            updateBookCount();
+            const grid = document.getElementById('booksGrid');
+            const emptyState = document.getElementById('emptyState');
+            const emptyStateDesc = document.getElementById('emptyStateDesc');
+
+            const searchTerm = document.getElementById('localSearchInput').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('statusFilterSelect').value;
+
+            const filtered = books.filter(book => {
+                const matchesStatus = statusFilter === 'Alle' || book.status === statusFilter;
+                const matchesSearch = !searchTerm || 
+                    (book.title && book.title.toLowerCase().includes(searchTerm)) ||
+                    (book.author && book.author.toLowerCase().includes(searchTerm)) ||
+                    (book.isbn && book.isbn.toLowerCase().includes(searchTerm));
+                return matchesStatus && matchesSearch;
+            });
+
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                if (books.length > 0) {
+                    emptyStateDesc.textContent = 'Keine Bücher entsprechen deinen aktuellen Filterkriterien.';
+                } else {
+                    emptyStateDesc.textContent = 'Deine Bücherliste ist noch leer. Suche oben nach einem Buch, scanne einen ISBN-Barcode oder füge ein Buch manuell hinzu.';
+                }
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            filtered.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow flex gap-4';
+
+                let statusBadgeClass = 'bg-slate-100 text-slate-700';
+                if (book.status === 'Lese ich gerade') statusBadgeClass = 'bg-amber-100 text-amber-800';
+                if (book.status === 'Gelesen') statusBadgeClass = 'bg-emerald-100 text-emerald-800';
+
+                const coverHtml = book.cover 
+                    ? `<img src="${escapeHtml(book.cover)}" alt="Cover" class="w-20 h-28 object-cover rounded-lg border border-slate-200 flex-shrink-0 bg-slate-100" onerror="this.outerHTML=getPlaceholderCoverHtml()">`
+                    : getPlaceholderCoverHtml();
+
+                card.innerHTML = `
+                    ${coverHtml}
+                    <div class="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-semibold text-slate-900 text-sm leading-snug line-clamp-2" title="${escapeHtml(book.title)}">${escapeHtml(book.title)}</h3>
+                            <p class="text-xs text-slate-600 mt-1 truncate" title="${escapeHtml(book.author)}">${escapeHtml(book.author)}</p>
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-[11px] text-slate-400">
+                                ${book.year ? `<span>${escapeHtml(book.year)}</span>` : ''}
+                                ${book.year && book.isbn ? `<span>•</span>` : ''}
+                                ${book.isbn ? `<span class="font-mono">ISBN: ${escapeHtml(book.isbn)}</span>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-100">
+                            <select onchange="changeBookStatus('${book.id}', this.value)" class="text-xs font-medium px-2.5 py-1 rounded-lg border-0 cursor-pointer focus:ring-2 focus:ring-indigo-500 ${statusBadgeClass}">
+                                <option value="Ungelesen" ${book.status === 'Ungelesen' ? 'selected' : ''}>Ungelesen</option>
+                                <option value="Lese ich gerade" ${book.status === 'Lese ich gerade' ? 'selected' : ''}>Lese ich gerade</option>
+                                <option value="Gelesen" ${book.status === 'Gelesen' ? 'selected' : ''}>Gelesen</option>
+                            </select>
+
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="openEditModal('${book.id}')" title="Bearbeiten" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <button type="button" onclick="deleteBook('${book.id}')" title="Löschen" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function getPlaceholderCoverHtml() {
+            return `
+                <div class="w-20 h-28 rounded-lg border border-slate-200 bg-slate-100 flex flex-col items-center justify-center text-slate-400 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span class="text-[10px]">Kein Cover</span>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // Buch-Aktionen (Hinzufügen, Bearbeiten, Löschen)
+        // ==========================================
+        function addBook(bookData) {
+            if (bookData.isbn && books.some(b => b.isbn === bookData.isbn)) {
+                showToast('Dieses Buch (ISBN) ist bereits in deiner Liste.', 'info');
+                return false;
+            }
+
+            const newBook = {
+                id: 'book_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                title: bookData.title || 'Unbekannter Titel',
+                author: bookData.author || 'Unbekannter Autor',
+                isbn: bookData.isbn || '',
+                year: bookData.year ? String(bookData.year) : '',
+                cover: bookData.cover || '',
+                status: bookData.status || 'Ungelesen',
+                addedAt: new Date().toISOString()
+            };
+
+            books.unshift(newBook);
+            saveBooks();
+            renderBooks();
+            showToast(`"${newBook.title}" hinzugefügt!`, 'success');
+            return true;
+        }
+
+        function changeBookStatus(id, newStatus) {
+            const book = books.find(b => b.id === id);
+            if (book) {
+                book.status = newStatus;
+                saveBooks();
+                renderBooks();
+            }
+        }
+
+        function deleteBook(id) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+            books = books.filter(b => b.id !== id);
+            saveBooks();
+            renderBooks();
+            showToast(`"${book.title}" entfernt.`, 'info');
+        }
+
+        // ==========================================
+        // Online-Suche (Open Library API)
+        // ==========================================
+        async function handleOnlineSearch(event) {
+            event.preventDefault();
+            const query = document.getElementById('onlineSearchInput').value.trim();
+            if (!query) return;
+
+            const loadingEl = document.getElementById('onlineSearchLoading');
+            const resultsContainer = document.getElementById('onlineSearchResultsContainer');
+            const resultsGrid = document.getElementById('onlineSearchResults');
+            const searchBtn = document.getElementById('onlineSearchBtn');
+
+            loadingEl.classList.remove('hidden');
+            resultsContainer.classList.add('hidden');
+            searchBtn.disabled = true;
+
+            try {
+                const cleanQuery = query.replace(/[-\s]/g, '');
+                const isIsbn = /^(97(8|9))?\d{9}(\d|X)$/i.test(cleanQuery);
+
+                const url = isIsbn 
+                    ? `https://openlibrary.org/search.json?isbn=${encodeURIComponent(cleanQuery)}&limit=6`
+                    : `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=9`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Netzwerkfehler bei der Suche');
+                const data = await response.json();
+
+                resultsGrid.innerHTML = '';
+
+                if (!data.docs || data.docs.length === 0) {
+                    resultsGrid.innerHTML = `<p class="text-sm text-slate-500 col-span-full py-2">Keine Ergebnisse für "${escapeHtml(query)}" gefunden. Du kannst das Buch aber manuell hinzufügen.</p>`;
+                } else {
+                    data.docs.forEach(doc => {
+                        const title = doc.title || 'Unbekannter Titel';
+                        const author = doc.author_name ? doc.author_name.join(', ') : 'Unbekannter Autor';
+                        const year = doc.first_publish_year || '';
+                        const isbn = doc.isbn ? doc.isbn[0] : (isIsbn ? cleanQuery : '');
+                        const cover = doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '';
+                        const coverLarge = doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : '';
+                        const workKey = doc.key || '';
+                        const pages = doc.number_of_pages_median || '';
+                        const publisher = doc.publisher ? doc.publisher[0] : '';
+                        const subjects = doc.subject ? doc.subject.slice(0, 5) : [];
+
+                        const bookObj = { title, author, year, isbn, cover, coverLarge, workKey, pages, publisher, subjects };
+                        const card = document.createElement('div');
+                        card.className = 'flex gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-indigo-300 hover:shadow-sm transition-all cursor-pointer';
+
+                        const coverHtml = cover
+                            ? `<img src="${escapeHtml(cover)}" alt="Cover" class="w-14 h-20 object-cover rounded-lg border border-slate-200 flex-shrink-0 bg-slate-100" onerror="this.style.display='none'">`
+                            : `<div class="w-14 h-20 rounded-lg border border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400 flex-shrink-0 text-[10px] text-center p-1">Kein Cover</div>`;
+
+                        card.innerHTML = `
+                            ${coverHtml}
+                            <div class="flex-1 min-w-0 flex flex-col justify-between">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-slate-900 line-clamp-2 leading-tight">${escapeHtml(title)}</h4>
+                                    <p class="text-xs text-slate-600 truncate mt-0.5">${escapeHtml(author)}</p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">${year ? year : ''} ${isbn ? `• ${escapeHtml(isbn)}` : ''}</p>
+                                </div>
+                                <div class="mt-2 flex items-center justify-between">
+                                    <button type="button" class="add-result-btn inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition-colors cursor-pointer">
+                                        + Hinzufügen
+                                    </button>
+                                    <span class="text-[11px] text-indigo-600 font-medium">Details →</span>
+                                </div>
+                            </div>
+                        `;
+
+                        card.addEventListener('click', () => openDetailModal(bookObj));
+                        card.querySelector('.add-result-btn').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            addBook(bookObj);
+                        });
+
+                        resultsGrid.appendChild(card);
+                    });
+                }
+
+                resultsContainer.classList.remove('hidden');
+            } catch (error) {
+                console.error('Online-Suche Fehler:', error);
+                showToast('Fehler bei der Online-Suche. Bitte später erneut versuchen.', 'error');
+            } finally {
+                loadingEl.classList.add('hidden');
+                searchBtn.disabled = false;
+            }
+        }
+
+        function clearOnlineSearch() {
+            document.getElementById('onlineSearchResultsContainer').classList.add('hidden');
+            document.getElementById('onlineSearchInput').value = '';
+        }
+
+        // ==========================================
+        // Buch-Detailansicht (Modal)
+        // ==========================================
+        async function openDetailModal(bookObj) {
+            const modal = document.getElementById('bookDetailModal');
+            const coverContainer = document.getElementById('detailCoverContainer');
+            const titleEl = document.getElementById('detailTitle');
+            const authorEl = document.getElementById('detailAuthor');
+            const metaGrid = document.getElementById('detailMetaGrid');
+            const subjectsEl = document.getElementById('detailSubjects');
+            const descEl = document.getElementById('detailDescription');
+            const descLoading = document.getElementById('detailDescriptionLoading');
+
+            const coverUrl = bookObj.coverLarge || bookObj.cover;
+            if (coverUrl) {
+                coverContainer.innerHTML = `<img src="${escapeHtml(coverUrl)}" alt="Cover" class="w-32 h-48 object-cover rounded-xl border border-slate-200 shadow-sm bg-slate-100" onerror="this.outerHTML=getLargePlaceholderCoverHtml()">`;
+            } else {
+                coverContainer.innerHTML = getLargePlaceholderCoverHtml();
+            }
+
+            titleEl.textContent = bookObj.title;
+            authorEl.textContent = bookObj.author;
+
+            let metaHtml = '';
+            if (bookObj.year) metaHtml += `<div><span class="text-slate-400">Jahr:</span> <span class="font-medium text-slate-800">${escapeHtml(String(bookObj.year))}</span></div>`;
+            if (bookObj.isbn) metaHtml += `<div><span class="text-slate-400">ISBN:</span> <span class="font-mono font-medium text-slate-800">${escapeHtml(bookObj.isbn)}</span></div>`;
+            if (bookObj.pages) metaHtml += `<div><span class="text-slate-400">Seiten:</span> <span class="font-medium text-slate-800">${escapeHtml(String(bookObj.pages))}</span></div>`;
+            if (bookObj.publisher) metaHtml += `<div><span class="text-slate-400">Verlag:</span> <span class="font-medium text-slate-800">${escapeHtml(bookObj.publisher)}</span></div>`;
+            metaGrid.innerHTML = metaHtml;
+
+            subjectsEl.innerHTML = '';
+            if (bookObj.subjects && bookObj.subjects.length > 0) {
+                bookObj.subjects.forEach(subj => {
+                    const badge = document.createElement('span');
+                    badge.className = 'px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md text-[11px]';
+                    badge.textContent = subj;
+                    subjectsEl.appendChild(badge);
+                });
+            }
+
+            updateDetailAddState(bookObj);
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            descEl.textContent = '';
+            if (bookObj.workKey) {
+                descLoading.classList.remove('hidden');
+                try {
+                    const res = await fetch(`https://openlibrary.org${bookObj.workKey}.json`);
+                    if (res.ok) {
+                        const workData = await res.json();
+                        let descriptionText = '';
+                        if (typeof workData.description === 'string') {
+                            descriptionText = workData.description;
+                        } else if (workData.description && typeof workData.description.value === 'string') {
+                            descriptionText = workData.description.value;
+                        }
+                        descEl.textContent = descriptionText || 'Keine Beschreibung verfügbar.';
+                    } else {
+                        descEl.textContent = 'Keine Beschreibung verfügbar.';
+                    }
+                } catch (e) {
+                    console.warn('Fehler beim Laden der Beschreibung:', e);
+                    descEl.textContent = 'Beschreibung konnte nicht geladen werden.';
+                } finally {
+                    descLoading.classList.add('hidden');
+                }
+            } else {
+                descLoading.classList.add('hidden');
+                descEl.textContent = 'Keine Beschreibung verfügbar.';
+            }
+        }
+
+        function updateDetailAddState(bookObj) {
+            const alreadyEl = document.getElementById('detailAlreadyInList');
+            const addControls = document.getElementById('detailAddControls');
+            const addBtn = document.getElementById('detailAddBtn');
+            const statusSelect = document.getElementById('detailStatusSelect');
+
+            const exists = books.some(b =>
+                (bookObj.isbn && b.isbn === bookObj.isbn) ||
+                (b.title.toLowerCase() === bookObj.title.toLowerCase() && b.author.toLowerCase() === bookObj.author.toLowerCase())
+            );
+
+            if (exists) {
+                alreadyEl.classList.remove('hidden');
+                alreadyEl.classList.add('flex');
+                addControls.classList.add('hidden');
+            } else {
+                alreadyEl.classList.add('hidden');
+                alreadyEl.classList.remove('flex');
+                addControls.classList.remove('hidden');
+
+                addBtn.onclick = () => {
+                    const added = addBook({
+                        ...bookObj,
+                        status: statusSelect.value
+                    });
+                    if (added) {
+                        updateDetailAddState(bookObj);
+                    }
+                };
+            }
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('bookDetailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function getLargePlaceholderCoverHtml() {
+            return `
+                <div class="w-32 h-48 rounded-xl border border-slate-200 bg-slate-100 flex flex-col items-center justify-center text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span class="text-xs">Kein Cover</span>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // ISBN-Barcode-Scanner (html5-qrcode)
+        // ==========================================
+        function openScannerModal() {
+            const modal = document.getElementById('scannerModal');
+            const errorEl = document.getElementById('scannerError');
+            const statusEl = document.getElementById('scannerStatus');
+            const readerEl = document.getElementById('reader');
+
+            errorEl.classList.add('hidden');
+            statusEl.classList.add('hidden');
+            readerEl.innerHTML = 'Kamera wird initialisiert...';
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (typeof Html5Qrcode === 'undefined') {
+                errorEl.textContent = 'Die Scanner-Bibliothek konnte nicht geladen werden. Bitte prüfe deine Internetverbindung.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                html5QrCode = new Html5Qrcode("reader");
+                const config = { 
+                    fps: 10, 
+                    qrbox: { width: 250, height: 120 },
+                    formatsToSupport: [ 
+                        Html5QrcodeSupportedFormats.EAN_13, 
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.UPC_A
+                    ]
+                };
+
+                html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    onScanSuccess,
+                    () => {}
+                ).then(() => {
+                    isScanning = true;
+                }).catch(err => {
+                    console.error('Kamera-Fehler:', err);
+                    readerEl.innerHTML = '<span class="p-4 text-center">Kamera nicht verfügbar</span>';
+                    errorEl.textContent = 'Kamerazugriff nicht möglich (z.B. in der Vorschau/iframe blockiert oder keine Kamera vorhanden). Bitte nutze die Suche oder das manuelle Hinzufügen.';
+                    errorEl.classList.remove('hidden');
+                });
+            } catch (e) {
+                console.error('Scanner Init Fehler:', e);
+                readerEl.innerHTML = '';
+                errorEl.textContent = 'Scanner konnte nicht gestartet werden.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function onScanSuccess(decodedText) {
+            if (!isScanning) return;
+            isScanning = false;
+
+            if (html5QrCode) {
+                try {
+                    await html5QrCode.stop();
+                } catch (e) {
+                    console.warn('Fehler beim Stoppen des Scanners:', e);
+                }
+            }
+
+            const statusEl = document.getElementById('scannerStatus');
+            const statusText = document.getElementById('scannerStatusText');
+            statusText.textContent = `ISBN ${decodedText} erkannt! Suche Buchdaten...`;
+            statusEl.classList.remove('hidden');
+
+            await lookupIsbnAndAdd(decodedText);
+        }
+
+        async function lookupIsbnAndAdd(isbn) {
+            try {
+                const cleanIsbn = isbn.replace(/[-\s]/g, '');
+                const response = await fetch(`https://openlibrary.org/search.json?isbn=${encodeURIComponent(cleanIsbn)}&limit=1`);
+                if (!response.ok) throw new Error('API Fehler');
+                const data = await response.json();
+
+                closeScannerModal();
+
+                if (data.docs && data.docs.length > 0) {
+                    const doc = data.docs[0];
+                    addBook({
+                        title: doc.title || 'Unbekannter Titel',
+                        author: doc.author_name ? doc.author_name.join(', ') : 'Unbekannter Autor',
+                        year: doc.first_publish_year || '',
+                        isbn: cleanIsbn,
+                        cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : ''
+                    });
+                } else {
+                    showToast(`ISBN ${cleanIsbn} nicht gefunden. Bitte manuell ergänzen.`, 'info');
+                    openManualModal(cleanIsbn);
+                }
+            } catch (error) {
+                console.error('ISBN Lookup Fehler:', error);
+                closeScannerModal();
+                showToast(`Fehler beim Nachschlagen der ISBN ${isbn}.`, 'error');
+                openManualModal(isbn);
+            }
+        }
+
+        async function closeScannerModal() {
+            const modal = document.getElementById('scannerModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            isScanning = false;
+
+            if (html5QrCode) {
+                try {
+                    if (html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                    html5QrCode.clear();
+                } catch (e) {
+                    // Ignorieren
+                }
+                html5QrCode = null;
+            }
+        }
+
+        // ==========================================
+        // Modal: Manuell hinzufügen / Bearbeiten
+        // ==========================================
+        function openManualModal(prefillIsbn = '') {
+            document.getElementById('bookFormTitle').textContent = 'Buch manuell hinzufügen';
+            document.getElementById('bookForm').reset();
+            document.getElementById('bookIdInput').value = '';
+            document.getElementById('bookCoverInput').value = '';
+            if (prefillIsbn) {
+                document.getElementById('bookIsbnInput').value = prefillIsbn;
+            }
+
+            const modal = document.getElementById('bookFormModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('bookTitleInput').focus();
+        }
+
+        function openEditModal(id) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+
+            document.getElementById('bookFormTitle').textContent = 'Buch bearbeiten';
+            document.getElementById('bookIdInput').value = book.id;
+            document.getElementById('bookTitleInput').value = book.title;
+            document.getElementById('bookAuthorInput').value = book.author;
+            document.getElementById('bookIsbnInput').value = book.isbn || '';
+            document.getElementById('bookYearInput').value = book.year || '';
+            document.getElementById('bookStatusInput').value = book.status || 'Ungelesen';
+            document.getElementById('bookCoverInput').value = book.cover || '';
+
+            const modal = document.getElementById('bookFormModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBookFormModal() {
+            const modal = document.getElementById('bookFormModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function handleBookFormSubmit(event) {
+            event.preventDefault();
+            const id = document.getElementById('bookIdInput').value;
+            const title = document.getElementById('bookTitleInput').value.trim();
+            const author = document.getElementById('bookAuthorInput').value.trim();
+            const isbn = document.getElementById('bookIsbnInput').value.trim();
+            const year = document.getElementById('bookYearInput').value.trim();
+            const status = document.getElementById('bookStatusInput').value;
+            const cover = document.getElementById('bookCoverInput').value;
+
+            if (id) {
+                const index = books.findIndex(b => b.id === id);
+                if (index !== -1) {
+                    books[index] = {
+                        ...books[index],
+                        title,
+                        author,
+                        isbn,
+                        year,
+                        status,
+                        cover
+                    };
+                    saveBooks();
+                    renderBooks();
+                    showToast('Buch aktualisiert!', 'success');
+                }
+            } else {
+                addBook({ title, author, isbn, year, status, cover });
+            }
+
+            closeBookFormModal();
+        }
+
+        // Hilfsfunktion gegen XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==========================================
+        // CSV-Export
+        // ==========================================
+        function exportBooksToCSV() {
+            if (!books || books.length === 0) {
+                showToast('Keine Bücher zum Exportieren vorhanden.', 'info');
+                return;
+            }
+
+            const headers = ['Titel', 'Autor', 'ISBN', 'Erscheinungsjahr', 'Lesestatus', 'Cover-URL', 'Hinzugefügt am'];
+
+            const escapeCsvValue = (val) => {
+                const str = val === null || val === undefined ? '' : String(val);
+                const escaped = str.replace(/"/g, '""');
+                return `"${escaped}"`;
+            };
+
+            const rows = books.map(book => [
+                escapeCsvValue(book.title),
+                escapeCsvValue(book.author),
+                escapeCsvValue(book.isbn),
+                escapeCsvValue(book.year),
+                escapeCsvValue(book.status),
+                escapeCsvValue(book.cover),
+                escapeCsvValue(book.addedAt ? new Date(book.addedAt).toLocaleDateString('de-DE') : '')
+            ].join(';'));
+
+            const csvContent = '\uFEFF' + [headers.map(escapeCsvValue).join(';'), ...rows].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const today = new Date().toISOString().slice(0, 10);
+            const filename = `buecherliste_${today}.csv`;
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast(`${books.length} Bücher als ${filename} exportiert!`, 'success');
+        }
+    </script>
+</body>
+</html>
